@@ -1,75 +1,93 @@
+import numpy as np
 import random
-import matplotlib.pyplot as plt
 
-# Set the seed with your student ID
-seed_value = 123456789
-random.seed(seed_value)
 
-# Step 2: Load dataset into 2D list "Data"
-# Assume 'data' is your dataset in the form of a 2D list
-# Replace this with your actual dataset
-# Example: data = [[x1, y1], [x2, y2], ...]
-data = ...
+data_path = 'AI_lab\Assigenmnet_4\jain_feats.txt'
+data = np.genfromtxt(data_path, delimiter=' ')
 
-# Step 3: Randomly select K different data points from "Data"
-K = 4
-centers = random.sample(data, K)
+# Function for K-Means Clustering
+def k_means_clustering(data, k):
+    # Initialize cluster centers
+    center = []
+    for i in range(k):
+        rand = [random.randint(-3, 15), random.randint(-3, 15)]
+        center.append(rand)
+    print(f"Initial Centers for K={k}:", center)
 
-# Step 4: Initialize Clusters
-clusters = [[] for _ in range(K)]
+    # K-Means Algorithm
+    Clusters = [[] for i in range(k)]
+    iteration = 0
 
-# Step 5-24: K-means algorithm
-itr = 1
-shift = 0
+    while True:
+        Temp_Clusters = [[] for i in range(k)]
+        data_index = 0
 
-while True:
-    # Assign data points to clusters
-    temp_clusters = [[] for _ in range(K)]
-    for point in data:
-        distances = [sum((point[i] - center[i]) ** 2 for i in range(len(point))) for center in centers]
-        closest_center = distances.index(min(distances))
-        temp_clusters[closest_center].append(point)
+        for S in data:
+            min_dist = float('inf')
+            min_index = -1
 
-    # Check for convergence
-    if itr > 1 and shift < 50:
-        break
+            for index, C in enumerate(center):
+                dist = np.linalg.norm(S - C)
+                if dist < min_dist:
+                    min_dist = dist
+                    min_index = index
 
-    shift = 0
+            Temp_Clusters[min_index].append(data_index)
+            data_index += 1
 
-    # Update centers
-    for i, cluster in enumerate(temp_clusters):
-        if cluster:
-            new_center = [sum(point[j] for point in cluster) / len(cluster) for j in range(len(point))]
-            centers[i] = new_center
+        for L in range(len(Temp_Clusters)):
+            avg = np.zeros(2)
+            for x in Temp_Clusters[L]:
+                avg += data[x] / len(Temp_Clusters[L])
+            center[L] = avg
 
-    # Check for shifting data points between clusters
-    for i in range(K):
-        for j in range(K):
-            if i != j:
-                for point in clusters[i]:
-                    if point in temp_clusters[j]:
-                        shift += 1
+        iteration += 1
 
-    # Assign temp_clusters to clusters
-    clusters = temp_clusters
+        if iteration > 1:
+            Shift = 0
+            for S in range(len(data)):
+                cluster_index = None
+                temp_index = None
+                for i, x in enumerate(Temp_Clusters):
+                    if S in x:
+                        temp_index = i
+                for i, x in enumerate(Clusters):
+                    if S in x:
+                        cluster_index = i
+                if cluster_index != temp_index:
+                    Shift += 1
 
-    itr += 1
+            Shift_Percentage = (Shift / len(data)) * 100
 
-# Step 25: Plot clusters with appropriate colors
-colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-for i, cluster in enumerate(clusters):
-    x_vals = [point[0] for point in cluster]
-    y_vals = [point[1] for point in cluster]
-    plt.scatter(x_vals, y_vals, c=colors[i], label=f'Cluster {i+1}')
+            if Shift_Percentage < 10:
+                Clusters = Temp_Clusters
+                break
 
-# Step 26-28: Calculate inertia
-inertia = 0
-for i, cluster in enumerate(clusters):
-    center = centers[i]
-    inertia += sum(sum((point[j] - center[j]) ** 2 for j in range(len(point))) for point in cluster)
+        Clusters = Temp_Clusters
 
-plt.scatter([center[0] for center in centers], [center[1] for center in centers], marker='x', c='k', label='Centers')
-plt.legend()
-plt.show()
+    return Clusters, center
 
-print("Inertia:", inertia)
+# Train the K-Means model
+k_value = 4  # You can choose the desired number of clusters
+clusters, centers = k_means_clustering(data, k_value)
+
+# Function to find the cluster for a given data point
+def find_cluster(data_point, centers):
+    min_dist = float('inf')
+    min_index = -1
+
+    for index, center in enumerate(centers):
+        dist = np.linalg.norm(data_point - center)
+        if dist < min_dist:
+            min_dist = dist
+            min_index = index
+
+    return min_index
+
+# User input to find cluster based on student ID
+user_student_id = int(input("Enter your student ID: "))
+random.seed(user_student_id)  # Using the entered student ID for random seed
+user_data_point = np.random.rand(2)  # Replace this with actual data for the user
+
+user_cluster = find_cluster(user_data_point, centers)
+print(f"Student with ID {user_student_id} belongs to Cluster {user_cluster + 1}")
