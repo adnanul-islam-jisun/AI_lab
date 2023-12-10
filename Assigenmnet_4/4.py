@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 
-data_path = 'AI_lab\Assigenmnet_4\jain_feats.txt'
+data_path = 'jain_feats.txt'
 data = np.genfromtxt(data_path, delimiter=' ')
 
 # Function for K-Means Clustering
